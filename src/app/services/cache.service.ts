@@ -1,16 +1,15 @@
 import { Injectable } from '@angular/core';
-import { LocalStorageService } from './local-storage.service';
-import { isEmpty, isString, isNumber, isDate } from 'lodash';
+import { StorageService } from './storage.service';
 import { Observable, of } from 'rxjs';
 import { flatMap, map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
-export class LocalCacheService {
+export class CacheService {
   defaultExpires = 86400; // 24Hrs
 
-  constructor(private localstorage: LocalStorageService) {}
+  constructor(private storageService: StorageService) {}
 
   /**
    * Cache or use result from observable
@@ -20,7 +19,7 @@ export class LocalCacheService {
    */
   public observable<T>(key: string, observable: Observable<T>, expires: number = this.defaultExpires): Observable<T> {
     // First fetch the item from localstorage (even though it may not exist)
-    return this.localstorage.getItem(key).pipe(
+    return this.storageService.getItem(key).pipe(
       // If the cached value has expired, nullify it, otherwise pass it through
       map((val: CacheStorageRecord) => {
         if (val) {
@@ -31,10 +30,11 @@ export class LocalCacheService {
       // At this point, if we encounter a null value, either it doesnt exist in the cache or it has expired.
       // If it doesnt exist, simply return the observable that has been passed in, caching its value as it passes through
       flatMap((val: CacheStorageRecord | null) => {
-        if (!isEmpty(val)) {
+        if (val) {
           return of(val.value);
         } else {
-          return observable.pipe(flatMap((value: any) => this.value(key, value, expires))); // The result may have 'expires' explicitly set
+          // The result may have 'expires' explicitly set
+          return observable.pipe(flatMap((value: any) => this.value(key, value, expires)));
         }
       })
     );
@@ -43,7 +43,7 @@ export class LocalCacheService {
   value<T>(key: string, value: T, expires: number | string | Date = this.defaultExpires): Observable<T> {
     const expiresSanitized: Date = this.sanitizeAndGenerateDateExpiry(expires);
 
-    return this.localstorage
+    return this.storageService
       .setItem(key, {
         expires: expiresSanitized,
         value
@@ -52,7 +52,7 @@ export class LocalCacheService {
   }
 
   expire(key: string): Observable<null> {
-    return this.localstorage.removeItem(key) as Observable<null>;
+    return this.storageService.removeItem(key) as Observable<null>;
   }
 
   private sanitizeAndGenerateDateExpiry(expires: string | number | Date): Date {
@@ -67,13 +67,13 @@ export class LocalCacheService {
   }
 
   private expiryToDate(expires: number | string | Date): Date {
-    if (isNumber(expires)) {
+    if (typeof expires === 'number') {
       return new Date(Date.now() + Math.abs(expires as number) * 1000);
     }
-    if (isString(expires)) {
+    if (typeof expires === 'string') {
       return new Date(expires);
     }
-    if (isDate(expires)) {
+    if (expires instanceof Date) {
       return expires as Date;
     }
 
