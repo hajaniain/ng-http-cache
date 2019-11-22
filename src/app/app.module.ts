@@ -6,10 +6,23 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatInputModule } from '@angular/material/input';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [AppComponent],
-  imports: [BrowserModule, BrowserAnimationsModule, HttpClientModule, MatSelectModule, MatCardModule],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    BrowserAnimationsModule,
+    ReactiveFormsModule,
+    HttpClientModule,
+    MatSelectModule,
+    MatCardModule,
+    MatAutocompleteModule,
+    MatInputModule
+  ],
   providers: [],
   bootstrap: [AppComponent]
 })
